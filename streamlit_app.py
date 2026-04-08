@@ -1,5 +1,4 @@
 import streamlit as st
-from snowflake.snowpark.context import get_active_session
 from snowflake.snowpark.functions import col
  
 st.title(":cup_with_straw: Customize Your Smoothie")
@@ -16,6 +15,8 @@ ingredients_list = st.multiselect('choose upto 5 ingridients:'
                                   , my_dataframe
                                   , max_selections=5
                                  )
+cnx=st.connection("snowflake")
+session = cnx.session()
  
 if ingredients_list:
     ingredients_string = ''
