@@ -16,10 +16,7 @@ try:
         FROM SMOOTHIES.PUBLIC.FRUIT_OPTIONS
         ORDER BY FRUIT_NAME
     """).to_pandas()
-
-    pd_df = my_dataframe.to_pandas()
-    st.dataframe(pd_df)
-    st.stop()
+    pd_df = my_dataframe
 
     ingredients_list = st.multiselect(
         "Choose up to 5 ingredients:",
