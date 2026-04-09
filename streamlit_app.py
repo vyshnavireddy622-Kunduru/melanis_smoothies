@@ -34,9 +34,8 @@ try:
             st.write('The search value for ', fruit_chosen, ' is ', search_on, '.')
 
             smoothiefroot_response = requests.get(f"https://my.smoothiefroot.com/api/fruit/{search_on}")
-            sf_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
             st.subheader(fruit_chosen + " Nutrition Info")
-            st.dataframe(data=sf_df, use_container_width=True)
+            st.json(smoothiefroot_response.json())
 
         if st.button("Submit Order"):
             if not name_on_order.strip():
