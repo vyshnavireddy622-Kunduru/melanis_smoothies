@@ -1,27 +1,72 @@
 import streamlit as st
-
+ 
 st.title(":cup_with_straw: Customize Your Smoothie")
+
 st.write("Choose the fruits you want in your custom smoothie")
-
+ 
 name_on_order = st.text_input("Name on smoothie:")
-st.write("The name on your smoothie will be:", name_on_order)
+ 
+try:
 
-cnx = st.connection("snowflake")
-session = cnx.session()
+    cnx = st.connection("snowflake")
 
-my_dataframe = session.sql("SELECT FRUIT_NAME FROM smoothies.public.fruit_options").to_pandas()
-st.dataframe(data=my_dataframe, use_container_width=True)
+    session = cnx.session()
+ 
+    fruit_df = session.sql("""
 
-ingredients_list = st.multiselect('Choose up to 5 ingredients:',
-                                  my_dataframe['FRUIT_NAME'].tolist(),
-                                  max_selections=5)
+        SELECT FRUIT_NAME
 
-if ingredients_list:
-    ingredients_string = ' '.join(ingredients_list)
+        FROM SMOOTHIES.PUBLIC.FRUIT_OPTIONS
 
-    my_insert_stmt = f"""INSERT INTO smoothies.public.orders(ingredients, name_on_order)
-                         VALUES ('{ingredients_string}','{name_on_order}')"""
+        ORDER BY FRUIT_NAME
 
-    if st.button('Submit Order'):
-        session.sql(my_insert_stmt).collect()
-        st.success('Your Smoothie is ordered, ' + name_on_order + '!', icon="✅")
+    """).to_pandas()
+ 
+    st.dataframe(fruit_df, use_container_width=True)
+ 
+    ingredients_list = st.multiselect(
+
+        "Choose up to 5 ingredients:",
+
+        fruit_df["FRUIT_NAME"].tolist(),
+
+        max_selections=5
+
+    )
+ 
+    if st.button("Submit Order"):
+
+        if not name_on_order.strip():
+
+            st.warning("Please enter your name.")
+
+        elif not ingredients_list:
+
+            st.warning("Please choose at least one ingredient.")
+
+        else:
+
+            ingredients_string = ", ".join(ingredients_list)
+
+            safe_name = name_on_order.replace("'", "''")
+
+            safe_ingredients = ingredients_string.replace("'", "''")
+ 
+            insert_sql = f"""
+
+                INSERT INTO SMOOTHIES.PUBLIC.ORDERS (INGREDIENTS, NAME_ON_ORDER)
+
+                VALUES ('{safe_ingredients}', '{safe_name}')
+
+            """
+
+            session.sql(insert_sql).collect()
+
+            st.success(f"Your Smoothie is ordered, {name_on_order}!", icon="✅")
+ 
+except Exception as e:
+
+    st.error("Connection or query failed")
+
+    st.exception(e)
+ 
