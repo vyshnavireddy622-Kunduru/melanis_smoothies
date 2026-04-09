@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import pandas as pd
 
 st.title(":cup_with_straw: Customize Your Smoothie")
 st.write("Choose the fruits you want in your custom smoothie")
@@ -10,17 +11,17 @@ try:
     cnx = st.connection("snowflake")
     session = cnx.session()
 
-    fruit_df = session.sql("""
-        SELECT FRUIT_NAME
+    my_dataframe = session.sql("""
+        SELECT FRUIT_NAME, SEARCH_ON
         FROM SMOOTHIES.PUBLIC.FRUIT_OPTIONS
         ORDER BY FRUIT_NAME
     """).to_pandas()
 
-    st.dataframe(fruit_df, use_container_width=True)
+    pd_df = my_dataframe
 
     ingredients_list = st.multiselect(
         "Choose up to 5 ingredients:",
-        fruit_df["FRUIT_NAME"].tolist(),
+        my_dataframe["FRUIT_NAME"].tolist(),
         max_selections=5
     )
 
@@ -28,10 +29,14 @@ try:
         ingredients_string = ""
         for fruit_chosen in ingredients_list:
             ingredients_string += fruit_chosen + " "
-            smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/" + fruit_chosen)
+
+            search_on = pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
+            st.write('The search value for ', fruit_chosen, ' is ', search_on, '.')
+
+            smoothiefroot_response = requests.get("https://my.smoothiefroot.com/api/fruit/" + search_on)
             sf_df = smoothiefroot_response.json()
             st.subheader(fruit_chosen + " Nutrition Info")
-            sf_df = st.dataframe(data = smoothiefroot_response.json(), use_container_width=True)
+            st.dataframe(data=sf_df, use_container_width=True)
 
         if st.button("Submit Order"):
             if not name_on_order.strip():
