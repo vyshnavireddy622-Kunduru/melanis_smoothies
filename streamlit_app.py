@@ -10,6 +10,10 @@ name_on_order = st.text_input("Name on smoothie:")
 try:
     cnx = st.connection("snowflake")
     session = cnx.session()
+    my_dataframe = session.table('smoothies.public.fruit_options').select(col('FRUIT_NAME'),col('SEARCH_ON'))
+    st.dataframe(data=my_dataframe, use_container_width=True)
+    st.stop()
+    
 
     my_dataframe = session.sql("""
         SELECT FRUIT_NAME, SEARCH_ON
@@ -17,7 +21,9 @@ try:
         ORDER BY FRUIT_NAME
     """).to_pandas()
 
-    pd_df = my_dataframe
+    pd_df = my_dataframe.to_pandas()
+    st.dataframe(pd_df)
+    st.stop()
 
     ingredients_list = st.multiselect(
         "Choose up to 5 ingredients:",
